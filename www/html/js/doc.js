@@ -103,7 +103,7 @@ function zoomChart() {
 	chart.zoomToIndexes(chartData.length - offset, chartData.length - 1);
 }
 
-$(function() {
+function getDataAndDrawChart() {
 	$.getJSON( "http://" + SERVER_IP + ":3000/api/grove_bme280/json/all", function(data) {
 		for(i = 0; i < data.length; i++) {
 			data[i].T = Number(data[i].T.toFixed(2));
@@ -113,8 +113,12 @@ $(function() {
 		}
 		drawChart(data);
 	});
-	
-	$( window ).resize(function() {
+}
+
+$(function() {
+	getDataAndDrawChart();
+	var drawTimer = setInterval(getDataAndDrawChart, 60000);
+	$(window).resize(function() {
 		zoomChart();
 	});
 });
