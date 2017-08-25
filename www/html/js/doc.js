@@ -1,6 +1,4 @@
 var SERVER_IP = "10.15.36.58"
-var AZURE_WEB_URL = "https://uswestcentral.services.azureml.net/workspaces/1543260605f544a7a7c657840ec4e5c4/services/3a5e0d4135074fada114efa37fb8535f/execute?api-version=2.0&details=true"
-var AZURE_API_KEY = "k+2hOI0pXqogxKv52eXLipVWsds50anezVjAtQKn4d8VhxMvoic3M8QIWYrZBHV/aS9q2rqMjhVyg0thW70PeQ=="
 
 var chartData, chart;
 var lastTimestamp = 0;
@@ -184,12 +182,12 @@ $(function() {
 			input = JSON.stringify(input);
 
 			$.ajax({
-				url: AZURE_WEB_URL,
+				url: $("input#APIAddress").val(),
 				type: "POST",
 				data: input,
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": "Bearer " + AZURE_API_KEY,
+					"Authorization": "Bearer " + $("input#APIKey").val(),
 					"Accept": "application/json"
 				},
 				error: function() {
