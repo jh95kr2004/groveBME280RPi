@@ -1,4 +1,6 @@
 var SERVER_IP = "10.15.36.58"
+var AZURE_WEB_URL = "https://uswestcentral.services.azureml.net/workspaces/1543260605f544a7a7c657840ec4e5c4/services/3a5e0d4135074fada114efa37fb8535f/execute?api-version=2.0&details=true"
+var AZURE_API_KEY = "k+2hOI0pXqogxKv52eXLipVWsds50anezVjAtQKn4d8VhxMvoic3M8QIWYrZBHV/aS9q2rqMjhVyg0thW70PeQ=="
 
 var chartData, chart;
 var lastTimestamp = 0;
@@ -120,5 +122,81 @@ $(function() {
 	var drawTimer = setInterval(getDataAndDrawChart, 60000);
 	$(window).resize(function() {
 		zoomChart();
+	});
+
+	$("button#predictButton").click(function() {
+		var date = new Date($("#predictDate").val());
+		date.setHours(date.getHours() + date.getTimezoneOffset() / 60);
+		date.setDate(date.getDate() - 1);
+		$.getJSON("http://" + SERVER_IP + ":3000/api/grove_bme280/json/" + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate(), function(data) {
+			if(data == null || data.length <= 0) return;
+			var temp_mean = temp_max = temp_min = data[0].T;
+			var humid_mean = humid_max = humid_min = data[0].H;
+			var dew_mean = data[0].T - (9 / 25) * (100 - data[0].H);
+			for(var i = 1; i < data.length; i++) {
+				temp_mean += data[i].T;
+				temp_max = (temp_max < data[i].T) ? data[i].T : temp_max;
+				temp_min = (temp_min > data[i].T) ? data[i].T : temp_min;
+				humid_mean += data[i].H;
+				humid_max = (humid_max < data[i].H) ? data[i].H : humid_max;
+				humid_min = (humid_min > data[i].H) ? data[i].H : humid_min;
+				dew_mean += (data[i].T - (9 / 25) * (100 - data[i].H));
+			}
+			temp_mean /= data.length;
+			humid_mean /= data.length;
+			dew_mean /= data.length;
+
+			var input = {
+				"Inputs": {
+					"input1": {
+						"ColumnNames": [
+							"year",
+							"month",
+							"day",
+							"mean_temperature",
+							"minimum_temperature",
+							"maximum_temperature",
+							"mean_humidity",
+							"minimum_humidity",
+							"maximum_humidity",
+							"mean_dewpoint",
+							"maximum_temperature_forecast"
+						],
+						"Values": [
+							[
+								date.getFullYear(),
+								(date.getMonth() + 1),
+								date.getDate(),
+								temp_mean,
+								temp_min,
+								temp_max,
+								humid_mean,
+								humid_min,
+								humid_max,
+								dew_mean,
+								"0"
+							]
+						]
+					}
+				},
+				"GlobalParameters": {}
+			};
+			input = JSON.stringify(input);
+
+			$.ajax({
+				url: AZURE_WEB_URL,
+				type: "POST",
+				data: input,
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": "Bearer " + AZURE_API_KEY,
+					"Accept": "application/json"
+				},
+				error: function() {
+				},
+				success: function(data) {
+				}
+			});
+		});
 	});
 });
